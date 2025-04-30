@@ -1,0 +1,165 @@
+/* Main Styles for User Management System */
+
+/* Import Cairo Font */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
+
+/* General Styles */
+body {
+  font-family: 'Cairo', sans-serif;
+  background-color: #ffffff;
+  color: #333333;
+}
+
+/* Navbar Styles */
+.navbar {
+  background: linear-gradient(to right, #1e40af, #3b82f6) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  font-weight: 700;
+}
+
+.nav-link {
+  font-weight: 500;
+}
+
+/* Card Styles */
+.card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.card-header {
+  background: linear-gradient(to right, #1e40af, #3b82f6);
+  color: white;
+  font-weight: 600;
+  padding: 15px 20px;
+}
+
+/* Button Styles */
+.btn-primary {
+  background: linear-gradient(to right, #1e40af, #3b82f6);
+  border: none;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(to right, #1e3a8a, #2563eb);
+}
+
+.btn-outline-primary {
+  border-color: #1e40af;
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.btn-outline-primary:hover {
+  background-color: #1e40af;
+  color: white;
+}
+
+/* Form Styles */
+.form-control, .form-select {
+  border-radius: 8px;
+  padding: 10px 15px;
+  border: 1px solid #e2e8f0;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+}
+
+/* Table Styles */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Badge Styles */
+.badge {
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* Footer Styles */
+footer {
+  background: linear-gradient(to right, #1e3a8a, #1e40af);
+  padding: 20px 0;
+  margin-top: 50px;
+}
+
+/* Profile Image */
+.rounded-circle {
+  border: 4px solid #3b82f6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Dashboard Cards */
+.bg-primary {
+  background: linear-gradient(to right, #1e40af, #3b82f6) !important;
+}
+
+.bg-success {
+  background: linear-gradient(to right, #065f46, #10b981) !important;
+}
+
+.bg-info {
+  background: linear-gradient(to right, #0e7490, #06b6d4) !important;
+}
+
+.bg-warning {
+  background: linear-gradient(to right, #92400e, #f59e0b) !important;
+}
+
+.bg-danger {
+  background: linear-gradient(to right, #9f1239, #e11d48) !important;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .card-title {
+    font-size: 1.25rem;
+  }
+  
+  .display-4 {
+    font-size: 2.5rem;
+  }
+}
+
+/* RTL Specific Adjustments */
+[dir="rtl"] .dropdown-menu {
+  text-align: right;
+}
+
+[dir="rtl"] .form-check {
+  padding-right: 1.5em;
+  padding-left: 0;
+}
+
+[dir="rtl"] .form-check-input {
+  float: right;
+  margin-right: -1.5em;
+  margin-left: 0;
+}

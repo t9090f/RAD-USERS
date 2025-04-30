@@ -1,0 +1,139 @@
+<%- include('../partials/header', { title: title }) %>
+
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">لوحة التحكم</h3>
+        <span class="badge bg-light text-primary">مستخدم عادي</span>
+      </div>
+      <div class="card-body">
+        <h5 class="card-title">مرحباً <%= user.name %></h5>
+        <p class="card-text">مرحباً بك في لوحة التحكم الخاصة بك. يمكنك إدارة ملفاتك وبياناتك الشخصية من هنا.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">معلوماتك الشخصية</h4>
+      </div>
+      <div class="card-body">
+        <div class="text-center mb-4">
+          <% if (user.profileImage && user.profileImage !== 'default-profile.jpg') { %>
+            <img src="/files/image/<%= user.profileImage %>" alt="الصورة الشخصية" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+          <% } else { %>
+            <img src="/img/default-profile.jpg" alt="الصورة الشخصية" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+          <% } %>
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"><strong>الاسم:</strong> <%= user.name %></li>
+          <% if (user.arabicName) { %>
+            <li class="list-group-item"><strong>الاسم بالعربية:</strong> <%= user.arabicName %></li>
+          <% } %>
+          <% if (user.englishName) { %>
+            <li class="list-group-item"><strong>الاسم بالإنجليزية:</strong> <%= user.englishName %></li>
+          <% } %>
+          <li class="list-group-item"><strong>البريد الإلكتروني:</strong> <%= user.email %></li>
+          <% if (user.workEmail) { %>
+            <li class="list-group-item"><strong>البريد الإلكتروني للعمل:</strong> <%= user.workEmail %></li>
+          <% } %>
+          <% if (user.phone) { %>
+            <li class="list-group-item"><strong>رقم الهاتف:</strong> <%= user.phone %></li>
+          <% } %>
+          <% if (user.jobTitle) { %>
+            <li class="list-group-item"><strong>المسمى الوظيفي:</strong> <%= user.jobTitle %></li>
+          <% } %>
+          <% if (user.department) { %>
+            <li class="list-group-item"><strong>القسم:</strong> <%= user.department %></li>
+          <% } %>
+          <% if (user.address) { %>
+            <li class="list-group-item"><strong>العنوان:</strong> <%= user.address %></li>
+          <% } %>
+        </ul>
+        <div class="d-grid gap-2 mt-3">
+          <a href="/users/profile" class="btn btn-outline-primary">تعديل الملف الشخصي</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6 mb-4">
+    <div class="card shadow h-100">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">ملفاتك</h4>
+      </div>
+      <div class="card-body">
+        <form action="/users/upload-file" method="POST" enctype="multipart/form-data" class="mb-4">
+          <div class="mb-3">
+            <label for="file" class="form-label">تحميل ملف جديد</label>
+            <input class="form-control" type="file" id="file" name="file" required>
+            <div class="form-text">الحد الأقصى لحجم الملف: 10 ميجابايت</div>
+          </div>
+          <div class="mb-3">
+            <label for="displayName" class="form-label">اسم الملف المخصص</label>
+            <input class="form-control" type="text" id="displayName" name="displayName" placeholder="أدخل اسماً مخصصاً للملف (اختياري)">
+            <div class="form-text">إذا تركت هذا الحقل فارغاً، سيتم استخدام الاسم الأصلي للملف</div>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">تحميل الملف</button>
+          </div>
+        </form>
+        
+        <hr>
+        
+        <h5>الملفات المحملة</h5>
+        <% if (user.files && user.files.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>اسم الملف الأصلي</th>
+                  <th>التسمية المخصصة</th>
+                  <th>النوع</th>
+                  <th>الحجم</th>
+                  <th>تاريخ التحميل</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% user.files.forEach(file => { %>
+                  <tr>
+                    <td><%= file.originalname %></td>
+                    <td>
+                      <% if (file.displayName && file.displayName.length > 0) { %>
+                        <%= file.displayName %>
+                      <% } else { %>
+                        لا يوجد
+                      <% } %>
+                    </td>
+                    <td><%= file.mimetype.split('/')[1] %></td>
+                    <td><%= (file.size / 1024).toFixed(2) %> كيلوبايت</td>
+                    <td><%= new Date(file.uploadDate).toLocaleDateString('ar-EG') %></td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <a href="/files/view/<%= file._id %>" class="btn btn-sm btn-info" target="_blank">عرض</a>
+                        <form action="/users/delete-file/<%= file._id %>" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا الملف؟');">
+                          <button type="submit" class="btn btn-sm btn-danger">حذف</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <div class="alert alert-info">
+            لا توجد ملفات محملة حتى الآن.
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

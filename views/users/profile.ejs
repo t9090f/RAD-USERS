@@ -1,0 +1,233 @@
+<%- include('../partials/header', { title: title }) %>
+
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">الملف الشخصي</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 text-center mb-4">
+            <% if (user.profileImage && user.profileImage !== 'default-profile.jpg') { %>
+              <img src="/files/image/<%= user.profileImage %>" alt="الصورة الشخصية" class="img-fluid rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
+            <% } else { %>
+              <img src="/img/default-profile.jpg" alt="الصورة الشخصية" class="img-fluid rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
+            <% } %>
+          </div>
+          <div class="col-md-8">
+            <form action="/users/profile" method="POST" enctype="multipart/form-data" id="profileForm">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label class="form-label">الاسم المستخدم</label>
+                    <input type="text" class="form-control" value="<%= user.name %>" disabled>
+                    <div class="form-text">الاسم مشتق من البريد الإلكتروني ولا يمكن تغييره</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="email" class="form-label">البريد الإلكتروني</label>
+                    <input type="email" class="form-control" id="email" value="<%= user.email %>" disabled>
+                    <div class="form-text">لا يمكن تغيير البريد الإلكتروني</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="arabicName" class="form-label">الاسم بالعربية</label>
+                    <input type="text" class="form-control" id="arabicName" name="arabicName" value="<%= user.arabicName || '' %>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="englishName" class="form-label">الاسم بالإنجليزية</label>
+                    <input type="text" class="form-control" id="englishName" name="englishName" value="<%= user.englishName || '' %>">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="civilId" class="form-label">السجل المدني</label>
+                    <input type="text" class="form-control" id="civilId" name="civilId" value="<%= user.civilId || '' %>">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="nationality" class="form-label">الجنسية</label>
+                    <input type="text" class="form-control" id="nationality" name="nationality" value="<%= user.nationality || '' %>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="gender" class="form-label">الجنس</label>
+                    <select class="form-select" id="gender" name="gender">
+                      <option value="" <%= !user.gender ? 'selected' : '' %>>اختر الجنس</option>
+                      <option value="ذكر" <%= user.gender === 'ذكر' ? 'selected' : '' %>>ذكر</option>
+                      <option value="أنثى" <%= user.gender === 'أنثى' ? 'selected' : '' %>>أنثى</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="birthDate" class="form-label">تاريخ الميلاد</label>
+                    <input type="date" class="form-control" id="birthDate" name="birthDate" value="<%= user.birthDate ? user.birthDate.toISOString().split('T')[0] : '' %>">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="phone" class="form-label">رقم الهاتف</label>
+                    <input type="text" class="form-control" id="phone" name="phone" value="<%= user.phone || '' %>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="workEmail" class="form-label">البريد الالكتروني للعمل</label>
+                    <input type="email" class="form-control" id="workEmail" name="workEmail" value="<%= user.workEmail || '' %>">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="specialization" class="form-label">التخصص</label>
+                    <input type="text" class="form-control" id="specialization" name="specialization" value="<%= user.specialization || '' %>">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="jobTitle" class="form-label">المسمى الوظيفي</label>
+                    <input type="text" class="form-control" id="jobTitle" name="jobTitle" value="<%= user.jobTitle || '' %>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="employeeId" class="form-label">الرقم الوظيفي</label>
+                    <input type="text" class="form-control" id="employeeId" name="employeeId" value="<%= user.employeeId || '' %>">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="department" class="form-label">القسم</label>
+                    <input type="text" class="form-control" id="department" name="department" value="<%= user.department || '' %>">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="currentWork" class="form-label">العمل الحالي</label>
+                    <input type="text" class="form-control" id="currentWork" name="currentWork" value="<%= user.currentWork || '' %>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="hiringDate" class="form-label">تاريخ التعيين</label>
+                    <input type="date" class="form-control" id="hiringDate" name="hiringDate" value="<%= user.hiringDate ? user.hiringDate.toISOString().split('T')[0] : '' %>">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="professionalClassificationId" class="form-label">رقم التصنيف المهني</label>
+                    <input type="text" class="form-control" id="professionalClassificationId" name="professionalClassificationId" value="<%= user.professionalClassificationId || '' %>">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="professionalClassificationExpiryDate" class="form-label">تاريخ انتهاء التصنيف المهني</label>
+                    <input type="date" class="form-control" id="professionalClassificationExpiryDate" name="professionalClassificationExpiryDate" value="<%= user.professionalClassificationExpiryDate ? user.professionalClassificationExpiryDate.toISOString().split('T')[0] : '' %>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label for="address" class="form-label">العنوان</label>
+                    <textarea class="form-control" id="address" name="address" rows="2"><%= user.address || '' %></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label for="profileImage" class="form-label">تغيير الصورة الشخصية</label>
+                    <input class="form-control" type="file" id="profileImage" name="profileImage">
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary" id="saveProfileBtn">حفظ التغييرات</button>
+              </div>
+              <div class="mt-2" id="submitStatus"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">تغيير كلمة المرور</h3>
+      </div>
+      <div class="card-body">
+        <form action="/users/change-password" method="POST">
+          <div class="mb-3">
+            <label for="currentPassword" class="form-label">كلمة المرور الحالية</label>
+            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+          </div>
+          <div class="mb-3">
+            <label for="newPassword" class="form-label">كلمة المرور الجديدة</label>
+            <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+            <div class="form-text">يجب أن تكون كلمة المرور على الأقل 6 أحرف</div>
+          </div>
+          <div class="mb-3">
+            <label for="confirmPassword" class="form-label">تأكيد كلمة المرور الجديدة</label>
+            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required minlength="6">
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">تغيير كلمة المرور</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // إضافة مستمع حدث لعرض رسالة عند تقديم النموذج فقط
+  document.getElementById('profileForm').addEventListener('submit', function() {
+    // عرض رسالة تحميل
+    document.getElementById('submitStatus').innerHTML = '<div class="alert alert-info">جاري حفظ البيانات...</div>';
+    
+    // طباعة بيانات النموذج في وحدة التحكم للتحقق
+    console.log('إرسال بيانات الملف الشخصي:');
+    const formData = new FormData(this);
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
+    
+    // تعطيل زر الإرسال لمنع النقرات المتعددة
+    document.getElementById('saveProfileBtn').disabled = true;
+    
+    // السماح للنموذج بالإرسال بشكل طبيعي
+    return true;
+  });
+</script>
+
+<%- include('../partials/footer') %>

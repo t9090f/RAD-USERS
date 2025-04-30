@@ -1,0 +1,59 @@
+<%- include('partials/header', { title: title }) %>
+
+<div class="container">
+  <div class="row justify-content-center mt-5">
+    <div class="col-md-8 text-center">
+      <h1 class="display-4 mb-4">مرحباً بك في نظام إدارة المستخدمين</h1>
+      <p class="lead">نظام متكامل لإدارة بيانات المستخدمين وملفاتهم بكل سهولة</p>
+      
+      <div class="mt-5">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+              <div class="card-body text-center">
+                <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">إدارة المستخدمين</h5>
+                <p class="card-text">إدارة بيانات المستخدمين بكل سهولة وأمان</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+              <div class="card-body text-center">
+                <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">إدارة الملفات</h5>
+                <p class="card-text">تخزين وإدارة ملفات المستخدمين بكفاءة</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+              <div class="card-body text-center">
+                <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">أمان متكامل</h5>
+                <p class="card-text">نظام مصادقة وتحقق متطور لحماية البيانات</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-4">
+        <% if (!locals.user) { %>
+          <a href="/auth/register" class="btn btn-primary btn-lg me-2">تسجيل جديد</a>
+          <a href="/auth/login" class="btn btn-outline-primary btn-lg">تسجيل الدخول</a>
+        <% } else { %>
+          <% if (locals.user.role === 'admin') { %>
+            <a href="/admin/dashboard" class="btn btn-primary btn-lg">الذهاب إلى لوحة التحكم</a>
+          <% } else if (locals.user.role === 'manager') { %>
+            <a href="/admin/manager/dashboard" class="btn btn-primary btn-lg">الذهاب إلى لوحة التحكم</a>
+          <% } else { %>
+            <a href="/users/dashboard" class="btn btn-primary btn-lg">الذهاب إلى لوحة التحكم</a>
+          <% } %>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

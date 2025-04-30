@@ -1,0 +1,75 @@
+<%- include('../partials/header', { title: title }) %>
+
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">إدارة المستخدمين</h3>
+        <a href="/admin/dashboard" class="btn btn-light btn-sm">العودة للوحة التحكم</a>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4">
+          <a href="/admin/users/new" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> إضافة مستخدم جديد
+          </a>
+        </div>
+        
+        <% if (users && users.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>الاسم</th>
+                  <th>البريد الإلكتروني</th>
+                  <th>الدور</th>
+                  <th>الحالة</th>
+                  <th>تاريخ التسجيل</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% users.forEach(user => { %>
+                  <tr>
+                    <td><%= user.name %></td>
+                    <td><%= user.email %></td>
+                    <td>
+                      <% if (user.role === 'admin') { %>
+                        <span class="badge bg-warning">مدير</span>
+                      <% } else if (user.role === 'manager') { %>
+                        <span class="badge bg-info">مشرف</span>
+                      <% } else { %>
+                        <span class="badge bg-success">مستخدم</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (user.isVerified) { %>
+                        <span class="badge bg-success">مفعل</span>
+                      <% } else { %>
+                        <span class="badge bg-danger">غير مفعل</span>
+                      <% } %>
+                    </td>
+                    <td><%= new Date(user.createdAt).toLocaleDateString('ar-EG') %></td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <a href="/admin/users/<%= user._id %>" class="btn btn-sm btn-info">عرض</a>
+                        <form action="/admin/users/<%= user._id %>/delete" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا المستخدم؟');">
+                          <button type="submit" class="btn btn-sm btn-danger" <%= (locals.user && locals.user.id && user._id.toString() === locals.user.id) ? 'disabled' : '' %>>حذف</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <div class="alert alert-info">
+            لا يوجد مستخدمين حتى الآن.
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | نظام إدارة المستخدمين</title>
+  <!-- Cairo Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Bootstrap RTL CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+      <div class="container">
+        <span class="navbar-brand mb-0 h1">نظام إدارة المستخدمين</span>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <% if (locals.user) { %>
+              <% if (locals.user.role === 'admin') { %>
+                <li class="nav-item">
+                  <a class="nav-link" href="/admin/dashboard">لوحة التحكم</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/admin/users">إدارة المستخدمين</a>
+                </li>
+              <% } else if (locals.user.role === 'manager') { %>
+                <li class="nav-item">
+                  <a class="nav-link" href="/admin/manager/dashboard">لوحة التحكم</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/admin/manager/users">إدارة المستخدمين</a>
+                </li>
+              <% } else { %>
+                <li class="nav-item">
+                  <a class="nav-link" href="/users/dashboard">لوحة التحكم</a>
+                </li>
+              <% } %>
+            <% } %>
+          </ul>
+          <ul class="navbar-nav">
+            <% if (locals.user) { %>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fas fa-user"></i> <%= locals.user.name %>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                  <li><a class="dropdown-item" href="/users/profile">الملف الشخصي</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="/auth/logout">تسجيل الخروج</a></li>
+                </ul>
+              </li>
+            <% } else { %>
+              <li class="nav-item">
+                <a class="nav-link" href="/auth/login">تسجيل الدخول</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/auth/register">تسجيل جديد</a>
+              </li>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mt-4">
+    <!-- Flash Messages -->
+    <% if (locals.success_msg && success_msg.length > 0) { %>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%= success_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% } %>
+
+    <% if (locals.error_msg && error_msg.length > 0) { %>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= error_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% } %>
+
+    <% if (locals.error && error.length > 0) { %>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= error %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% } %>

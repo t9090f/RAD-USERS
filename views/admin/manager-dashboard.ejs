@@ -1,0 +1,64 @@
+<%- include('../partials/header', { title: title }) %>
+
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">لوحة تحكم المشرف</h3>
+        <span class="badge bg-light text-primary">مشرف</span>
+      </div>
+      <div class="card-body">
+        <h5 class="card-title">مرحباً <%= locals.user.name %></h5>
+        <p class="card-text">مرحباً بك في لوحة تحكم المشرف. يمكنك إدارة المستخدمين العاديين من هنا.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="card bg-success text-white shadow">
+      <div class="card-body text-center">
+        <h5 class="card-title">إجمالي المستخدمين العاديين</h5>
+        <h2 class="display-4"><%= stats.totalUsers %></h2>
+        <p class="card-text">مستخدم</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">إدارة المستخدمين العاديين</h4>
+        <a href="/admin/manager/users" class="btn btn-light btn-sm">عرض الكل</a>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>البريد الإلكتروني</th>
+                <th>الحالة</th>
+                <th>تاريخ التسجيل</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- سيتم عرض المستخدمين هنا من خلال الصفحة الخاصة بإدارة المستخدمين -->
+              <tr>
+                <td colspan="5" class="text-center">
+                  <a href="/admin/manager/users" class="btn btn-outline-primary">عرض قائمة المستخدمين</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
