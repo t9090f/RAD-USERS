@@ -19,9 +19,13 @@ router.post('/register', [
     return true;
   })
 ], async (req, res) => {
+  console.log('تم استلام طلب تسجيل جديد');
+  console.log('البريد الإلكتروني:', req.body.email);
+  
   // Check for validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log('أخطاء في التحقق:', errors.array());
     req.flash('error_msg', errors.array()[0].msg);
     return res.redirect('/auth/register');
   }
@@ -30,16 +34,18 @@ router.post('/register', [
     // Check if user already exists
     const existingUser = await User.findOne({ email: req.body.email });
     if (existingUser) {
+      console.log('البريد الإلكتروني مسجل بالفعل:', req.body.email);
       req.flash('error_msg', 'البريد الإلكتروني مسجل بالفعل');
       return res.redirect('/auth/register');
     }
 
     // Create verification token
     const verificationToken = crypto.randomBytes(20).toString('hex');
+    console.log('تم إنشاء رمز التحقق:', verificationToken);
 
     // Create new user
     const newUser = new User({
-      name: req.body.email.split('@')[0], // استخدام جزء من البريد الإلكتروني كاسم افتراضي
+      name: req.body.email.split('@')[0],
       email: req.body.email,
       password: req.body.password,
       verificationToken: verificationToken
@@ -52,7 +58,7 @@ router.post('/register', [
     console.log('تم حفظ المستخدم بنجاح');
     
     // Send verification email
-    const verificationUrl = `${process.env.BASE_URL}/auth/verify/${verificationToken}`;
+    const verificationUrl = `${req.protocol}://${req.get('host')}/auth/verify/${verificationToken}`;
     console.log('رابط التحقق:', verificationUrl);
     
     const mailOptions = {
@@ -64,6 +70,8 @@ router.post('/register', [
           <p>شكراً لتسجيلك في نظام إدارة المستخدمين.</p>
           <p>الرجاء النقر على الرابط أدناه لتأكيد بريدك الإلكتروني:</p>
           <a href="${verificationUrl}" style="display: inline-block; background-color: #1e40af; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0;">تأكيد البريد الإلكتروني</a>
+          <p>أو قم بنسخ الرابط التالي ولصقه في المتصفح:</p>
+          <p dir="ltr" style="background-color: #f3f4f6; padding: 10px; border-radius: 5px;">${verificationUrl}</p>
           <p>إذا لم تقم بالتسجيل، يرجى تجاهل هذا البريد الإلكتروني.</p>
           <p>مع تحيات،<br>فريق نظام إدارة المستخدمين</p>
         </div>
@@ -77,7 +85,7 @@ router.post('/register', [
     req.flash('success_msg', 'تم التسجيل بنجاح. الرجاء التحقق من بريدك الإلكتروني لتفعيل حسابك');
     res.redirect('/auth/login');
   } catch (error) {
-    console.error(error);
+    console.error('حدث خطأ أثناء التسجيل:', error);
     req.flash('error_msg', 'حدث خطأ أثناء التسجيل');
     res.redirect('/auth/register');
   }
@@ -86,25 +94,55 @@ router.post('/register', [
 // Email verification route
 router.get('/verify/:token', async (req, res) => {
   try {
+    console.log('تم استلام طلب تحقق من البريد الإلكتروني');
+    console.log('رمز التحقق المستلم:', req.params.token);
+    
+    if (!req.params.token) {
+      console.log('لم يتم تقديم رمز التحقق');
+      req.flash('error_msg', 'رمز التحقق مطلوب');
+      return res.redirect('/auth/login');
+    }
+
     // Find user with verification token
     const user = await User.findOne({ verificationToken: req.params.token });
     
     if (!user) {
-      req.flash('error_msg', 'رمز التحقق غير صالح');
+      console.log('لم يتم العثور على مستخدم برمز التحقق المقدم');
+      req.flash('error_msg', 'رمز التحقق غير صالح أو منتهي الصلاحية');
       return res.redirect('/auth/login');
     }
 
+    if (user.isVerified) {
+      console.log('المستخدم مفعل بالفعل');
+      req.flash('info_msg', 'حسابك مفعل بالفعل. يمكنك تسجيل الدخول');
+      return res.redirect('/auth/login');
+    }
+
+    console.log('تم العثور على المستخدم:', user.email);
+    
     // Update user verification status
     user.isVerified = true;
     user.verificationToken = undefined;
     await user.save();
 
+    console.log('تم تحديث حالة التحقق للمستخدم بنجاح');
     req.flash('success_msg', 'تم تأكيد بريدك الإلكتروني بنجاح. يمكنك الآن تسجيل الدخول');
     res.redirect('/auth/login');
   } catch (error) {
-    console.error(error);
+    console.error('حدث خطأ أثناء تأكيد البريد الإلكتروني:', error);
     req.flash('error_msg', 'حدث خطأ أثناء تأكيد البريد الإلكتروني');
     res.redirect('/auth/login');
+  }
+});
+
+// إضافة مسار للتحقق من حالة التحقق
+router.get('/verify-status', async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.json({ isVerified: user.isVerified });
+  } catch (error) {
+    console.error('حدث خطأ أثناء التحقق من حالة التحقق:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء التحقق من حالة التحقق' });
   }
 });
 

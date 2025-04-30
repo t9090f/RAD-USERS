@@ -11,6 +11,19 @@ const cookieParser = require('cookie-parser');
 // Load environment variables
 dotenv.config();
 
+// التعامل مع عنوان الموقع
+const getBaseUrl = (req) => {
+  const protocol = req.protocol;
+  const host = req.get('host');
+  return `${protocol}://${host}`;
+};
+
+// إضافة middleware لتعيين BASE_URL
+app.use((req, res, next) => {
+  process.env.BASE_URL = getBaseUrl(req);
+  next();
+});
+
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,7 +35,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Middleware
 app.use(cors({
-  origin: 'https://rad-users.onrender.com',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true
 }));
 app.use(express.json());
@@ -40,8 +53,8 @@ app.use(session({
   }),
   cookie: {
     maxAge: 1000 * 60 * 60 * 24,
-    sameSite: 'none',
-    secure: true
+    sameSite: 'lax',
+    secure: false
   }
 }));
 
@@ -90,10 +103,29 @@ const userRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin');
 const filesRoutes = require('./routes/files');
 
+// تسجيل المسارات
+console.log('جاري تسجيل مسارات المصادقة...');
 app.use('/auth', authRoutes);
+console.log('تم تسجيل مسارات المصادقة');
+
+console.log('جاري تسجيل مسارات المستخدمين...');
 app.use('/users', userRoutes);
+console.log('تم تسجيل مسارات المستخدمين');
+
+console.log('جاري تسجيل مسارات الإدارة...');
 app.use('/admin', adminRoutes);
+console.log('تم تسجيل مسارات الإدارة');
+
+console.log('جاري تسجيل مسارات الملفات...');
 app.use('/files', filesRoutes);
+console.log('تم تسجيل مسارات الملفات');
+
+// مسار التحقق من البريد الإلكتروني
+app.get('/auth/verify/:token', (req, res) => {
+  console.log('تم استلام طلب تحقق من البريد الإلكتروني');
+  console.log('رمز التحقق:', req.params.token);
+  res.redirect(`/auth/verify/${req.params.token}`);
+});
 
 // Home route
 app.get('/', (req, res) => {
