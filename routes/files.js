@@ -51,23 +51,40 @@ router.get('/view/:fileId', async (req, res) => {
   try {
     console.log('طلب عرض الملف:', req.params.fileId);
     
-    // البحث عن المستخدم الذي يملك الملف
+    // التحقق من صحة معرف الملف
+    if (!mongoose.Types.ObjectId.isValid(req.params.fileId)) {
+      console.error('معرف الملف غير صالح:', req.params.fileId);
+      return res.status(400).send('معرف الملف غير صالح');
+    }
+    
+    // البحث عن المستخدم الذي يملك الملف باستخدام معرف الملف
     const user = await User.findOne({ 'files._id': req.params.fileId });
     
     if (!user) {
-      console.log('لم يتم العثور على المستخدم الذي يملك الملف:', req.params.fileId);
+      console.error('لم يتم العثور على المستخدم الذي يملك الملف:', req.params.fileId);
       return res.status(404).send('الملف غير موجود');
     }
     
     // البحث عن الملف في مصفوفة ملفات المستخدم
-    const userFile = user.files.find(f => f._id.toString() === req.params.fileId);
+    const userFile = user.files.id(req.params.fileId);
     
-    if (!userFile || !userFile.fileData) {
-      console.log('لم يتم العثور على الملف أو بيانات الملف:', req.params.fileId);
-      return res.status(404).send('الملف غير موجود أو لا يحتوي على بيانات');
+    if (!userFile) {
+      console.error('لم يتم العثور على الملف في مصفوفة ملفات المستخدم:', req.params.fileId);
+      return res.status(404).send('الملف غير موجود');
     }
     
-    console.log('تم العثور على الملف في نموذج المستخدم:', userFile.originalname);
+    if (!userFile.fileData) {
+      console.error('الملف لا يحتوي على بيانات:', req.params.fileId);
+      return res.status(404).send('الملف لا يحتوي على بيانات');
+    }
+    
+    console.log('تم العثور على الملف:', {
+      filename: userFile.filename,
+      originalname: userFile.originalname,
+      displayName: userFile.displayName,
+      mimetype: userFile.mimetype,
+      size: userFile.size
+    });
     
     // تحديد نوع المحتوى بناءً على نوع الملف
     let contentType = userFile.mimetype || 'application/octet-stream';
@@ -79,15 +96,19 @@ router.get('/view/:fileId', async (req, res) => {
       
       if (ext === 'jpg' || ext === 'jpeg') {
         contentType = 'image/jpeg';
+        disposition = 'inline';
       } else if (ext === 'png') {
         contentType = 'image/png';
+        disposition = 'inline';
       } else if (ext === 'gif') {
         contentType = 'image/gif';
+        disposition = 'inline';
       } else if (ext === 'pdf') {
         contentType = 'application/pdf';
         disposition = 'inline';
       } else if (ext === 'txt') {
         contentType = 'text/plain';
+        disposition = 'inline';
       } else if (ext === 'doc' || ext === 'docx') {
         contentType = 'application/msword';
         disposition = 'attachment';
@@ -101,18 +122,23 @@ router.get('/view/:fileId', async (req, res) => {
     
     console.log('نوع المحتوى:', contentType, 'طريقة العرض:', disposition);
     
-    // تحويل البيانات من Base64 إلى بيانات ثنائية
-    const fileBuffer = Buffer.from(userFile.fileData, 'base64');
-    
-    // ضبط رؤوس الاستجابة بشكل صحيح
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Content-Length': fileBuffer.length,
-      'Content-Disposition': `${disposition}; filename="${userFile.originalname}"`
-    });
-    
-    // إرسال الملف كتدفق بيانات
-    return res.end(fileBuffer);
+    try {
+      // تحويل البيانات من Base64 إلى بيانات ثنائية
+      const fileBuffer = Buffer.from(userFile.fileData, 'base64');
+      
+      // ضبط رؤوس الاستجابة بشكل صحيح
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Length': fileBuffer.length,
+        'Content-Disposition': `${disposition}; filename="${encodeURIComponent(userFile.originalname)}"`
+      });
+      
+      // إرسال الملف كتدفق بيانات
+      return res.end(fileBuffer);
+    } catch (bufferError) {
+      console.error('خطأ في تحويل بيانات الملف:', bufferError);
+      return res.status(500).send('حدث خطأ أثناء معالجة بيانات الملف');
+    }
   } catch (error) {
     console.error('خطأ في عرض الملف:', error);
     res.status(500).send('حدث خطأ أثناء محاولة عرض الملف');

@@ -209,6 +209,82 @@
   </div>
 </div>
 
+<div class="row">
+  <div class="col-md-12 mb-4">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">ملفاتك</h3>
+      </div>
+      <div class="card-body">
+        <form action="/users/upload-file" method="POST" enctype="multipart/form-data" class="mb-4">
+          <div class="mb-3">
+            <label for="file" class="form-label">تحميل ملف جديد</label>
+            <input class="form-control" type="file" id="file" name="file" required>
+            <div class="form-text">الحد الأقصى لحجم الملف: 10 ميجابايت</div>
+          </div>
+          <div class="mb-3">
+            <label for="displayName" class="form-label">اسم الملف المخصص</label>
+            <input class="form-control" type="text" id="displayName" name="displayName" placeholder="أدخل اسماً مخصصاً للملف (اختياري)">
+            <div class="form-text">إذا تركت هذا الحقل فارغاً، سيتم استخدام الاسم الأصلي للملف</div>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">تحميل الملف</button>
+          </div>
+        </form>
+        
+        <hr>
+        
+        <h5>الملفات المحملة</h5>
+        <% if (user.files && user.files.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>اسم الملف الأصلي</th>
+                  <th>التسمية المخصصة</th>
+                  <th>النوع</th>
+                  <th>الحجم</th>
+                  <th>تاريخ التحميل</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% user.files.forEach(file => { %>
+                  <tr>
+                    <td><%= file.originalname %></td>
+                    <td>
+                      <% if (file.displayName && file.displayName.length > 0) { %>
+                        <%= file.displayName %>
+                      <% } else { %>
+                        لا يوجد
+                      <% } %>
+                    </td>
+                    <td><%= file.mimetype.split('/')[1] %></td>
+                    <td><%= (file.size / 1024).toFixed(2) %> كيلوبايت</td>
+                    <td><%= new Date(file.uploadDate).toLocaleDateString('ar-EG') %></td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <a href="/files/view/<%= file._id %>" class="btn btn-sm btn-info" target="_blank">عرض</a>
+                        <form action="/users/delete-file/<%= file._id %>" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا الملف؟');">
+                          <button type="submit" class="btn btn-sm btn-danger">حذف</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <div class="alert alert-info">
+            لا توجد ملفات محملة حتى الآن.
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   // إضافة مستمع حدث لعرض رسالة عند تقديم النموذج فقط
   document.getElementById('profileForm').addEventListener('submit', function() {
@@ -228,6 +304,30 @@
     // السماح للنموذج بالإرسال بشكل طبيعي
     return true;
   });
+
+  // دالة حذف الملف
+  function deleteFile(fileId) {
+    if (confirm('هل أنت متأكد من حذف هذا الملف؟')) {
+      fetch(`/files/delete/${fileId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('حدث خطأ أثناء حذف الملف');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء حذف الملف');
+      });
+    }
+  }
 </script>
 
 <%- include('../partials/footer') %>
