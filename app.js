@@ -4,6 +4,7 @@ const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const flash = require('connect-flash');
 const cookieParser = require('cookie-parser');
 
@@ -15,32 +16,32 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000 // زيادة مهلة الاتصال إلى 30 ثانية
-})
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('تم الاتصال بقاعدة البيانات بنجاح'))
   .catch(err => console.error('خطأ في الاتصال بقاعدة البيانات:', err));
 
 // Middleware
 app.use(cors({
-  origin: true, // السماح بجميع المصادر
+  origin: 'https://rad-users.onrender.com',
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Set up session
+// Set up session with MongoDB store
 app.use(session({
   secret: process.env.SESSION_SECRET || 'سر_الجلسة_الافتراضي',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    ttl: 24 * 60 * 60 // 24 hours
+  }),
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    sameSite: 'none', // تعديل هذا للنشر
-    secure: true // تعديل هذا للنشر
+    maxAge: 1000 * 60 * 60 * 24,
+    sameSite: 'none',
+    secure: true
   }
 }));
 
