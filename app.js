@@ -25,7 +25,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Middleware
 app.use(cors({
-  origin: '*', // تعديل هذا ليتناسب مع نطاق Render.com
+  origin: true, // السماح بجميع المصادر
   credentials: true
 }));
 app.use(express.json());
