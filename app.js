@@ -11,6 +11,10 @@ const cookieParser = require('cookie-parser');
 // Load environment variables
 dotenv.config();
 
+// Initialize Express app
+const app = express();
+const PORT = process.env.PORT || 3000;
+
 // التعامل مع عنوان الموقع
 const getBaseUrl = (req) => {
   const protocol = req.protocol;
@@ -23,10 +27,6 @@ app.use((req, res, next) => {
   process.env.BASE_URL = getBaseUrl(req);
   next();
 });
-
-// Initialize Express app
-const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
