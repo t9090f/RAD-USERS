@@ -124,7 +124,12 @@ console.log('تم تسجيل مسارات الملفات');
 app.get('/auth/verify/:token', (req, res) => {
   console.log('تم استلام طلب تحقق من البريد الإلكتروني');
   console.log('رمز التحقق:', req.params.token);
-  res.redirect(`/auth/verify/${req.params.token}`);
+  console.log('BASE_URL:', process.env.BASE_URL);
+  console.log('الطلب من:', req.headers.host);
+  console.log('البروتوكول:', req.protocol);
+  
+  // إعادة توجيه إلى صفحة التحقق مع إضافة المزيد من المعلومات
+  res.redirect(`/auth/verify-email?token=${req.params.token}`);
 });
 
 // Home route

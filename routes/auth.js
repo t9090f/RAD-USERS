@@ -58,7 +58,7 @@ router.post('/register', [
     console.log('تم حفظ المستخدم بنجاح');
     
     // Send verification email
-    const verificationUrl = `${req.protocol}://${req.get('host')}/auth/verify/${verificationToken}`;
+    const verificationUrl = `${process.env.BASE_URL}/auth/verify-email?token=${verificationToken}`;
     console.log('رابط التحقق:', verificationUrl);
     
     const mailOptions = {
@@ -92,19 +92,19 @@ router.post('/register', [
 });
 
 // Email verification route
-router.get('/verify/:token', async (req, res) => {
+router.get('/verify-email', async (req, res) => {
   try {
     console.log('تم استلام طلب تحقق من البريد الإلكتروني');
-    console.log('رمز التحقق المستلم:', req.params.token);
+    console.log('رمز التحقق المستلم:', req.query.token);
     
-    if (!req.params.token) {
+    if (!req.query.token) {
       console.log('لم يتم تقديم رمز التحقق');
       req.flash('error_msg', 'رمز التحقق مطلوب');
       return res.redirect('/auth/login');
     }
 
     // Find user with verification token
-    const user = await User.findOne({ verificationToken: req.params.token });
+    const user = await User.findOne({ verificationToken: req.query.token });
     
     if (!user) {
       console.log('لم يتم العثور على مستخدم برمز التحقق المقدم');
