@@ -25,7 +25,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000', // عدل هذا إذا كان لديك دومين مختلف
+  origin: '*', // تعديل هذا ليتناسب مع نطاق Render.com
   credentials: true
 }));
 app.use(express.json());
@@ -39,8 +39,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    sameSite: 'lax', // أو strict إذا أردت أمان أعلى
-    secure: false // true إذا كنت تستخدم https فقط
+    sameSite: 'none', // تعديل هذا للنشر
+    secure: true // تعديل هذا للنشر
   }
 }));
 
