@@ -25,6 +25,7 @@ exports.isAuthenticated = async (req, res, next) => {
     
     // Set user in request object
     req.user = {
+      _id: user._id,
       id: user._id,
       name: user.name,
       email: user.email,
@@ -33,7 +34,7 @@ exports.isAuthenticated = async (req, res, next) => {
     
     next();
   } catch (error) {
-    console.error(error);
+    console.error('خطأ في المصادقة:', error);
     req.flash('error_msg', 'جلسة غير صالحة. الرجاء تسجيل الدخول مرة أخرى');
     res.redirect('/auth/login');
   }

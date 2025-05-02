@@ -3,6 +3,8 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { isAuthenticated, isAdmin, isManager } = require('../middleware/auth');
+const mongoose = require('mongoose');
+const XLSX = require('xlsx');
 
 // Admin dashboard route
 router.get('/dashboard', isAuthenticated, isAdmin, async (req, res) => {
@@ -35,14 +37,22 @@ router.get('/dashboard', isAuthenticated, isAdmin, async (req, res) => {
 // Get all users route
 router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
   try {
+    console.log('جلب قائمة المستخدمين...');
     const users = await User.find().select('-password -resetPasswordToken -resetPasswordExpires');
+    console.log(`تم العثور على ${users.length} مستخدم`);
+    
+    // تحويل معرفات المستخدمين إلى نصوص
+    const formattedUsers = users.map(user => ({
+      ...user.toObject(),
+      _id: user._id.toString()
+    }));
     
     res.render('admin/users', {
       title: 'إدارة المستخدمين',
-      users: users
+      users: formattedUsers
     });
   } catch (error) {
-    console.error(error);
+    console.error('خطأ في جلب المستخدمين:', error);
     req.flash('error_msg', 'حدث خطأ أثناء تحميل قائمة المستخدمين');
     res.redirect('/admin/dashboard');
   }
@@ -58,20 +68,59 @@ router.get('/users/new', isAuthenticated, isAdmin, (req, res) => {
 // Get user details route
 router.get('/users/:id', isAuthenticated, isAdmin, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password -resetPasswordToken -resetPasswordExpires');
+    console.log('محاولة جلب تفاصيل المستخدم:', req.params.id);
+    
+    // التحقق من صحة معرف المستخدم
+    if (!req.params.id) {
+      console.log('معرف المستخدم غير موجود');
+      req.flash('error_msg', 'معرف المستخدم غير صالح');
+      return res.redirect('/admin/users');
+    }
+
+    // تحويل معرف المستخدم إلى ObjectId
+    let userId;
+    try {
+      userId = new mongoose.Types.ObjectId(req.params.id);
+      console.log('معرف المستخدم بعد التحويل:', userId);
+    } catch (error) {
+      console.log('خطأ في تحويل معرف المستخدم:', error);
+      req.flash('error_msg', 'معرف المستخدم غير صالح');
+      return res.redirect('/admin/users');
+    }
+    
+    // جلب المستخدم مع استثناء الحقول الحساسة
+    const user = await User.findById(userId, {
+      password: 0,
+      resetPasswordToken: 0,
+      resetPasswordExpires: 0,
+      verificationToken: 0
+    }).lean();
     
     if (!user) {
+      console.log('المستخدم غير موجود:', req.params.id);
       req.flash('error_msg', 'المستخدم غير موجود');
       return res.redirect('/admin/users');
     }
     
+    console.log('تم العثور على المستخدم:', user._id);
+    
+    // تحويل التواريخ إلى تنسيق مناسب للعرض
+    const formattedUser = {
+      ...user,
+      _id: user._id.toString(),
+      birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : '',
+      hiringDate: user.hiringDate ? new Date(user.hiringDate).toISOString().split('T')[0] : '',
+      professionalClassificationExpiryDate: user.professionalClassificationExpiryDate ? new Date(user.professionalClassificationExpiryDate).toISOString().split('T')[0] : '',
+      createdAt: new Date(user.createdAt).toLocaleDateString('ar-EG')
+    };
+    
     res.render('admin/user-details', {
       title: 'تفاصيل المستخدم',
-      user: user
+      user: formattedUser
     });
   } catch (error) {
-    console.error(error);
-    req.flash('error_msg', 'حدث خطأ أثناء تحميل تفاصيل المستخدم');
+    console.error('خطأ في جلب تفاصيل المستخدم:', error);
+    req.flash('error_msg', 'حدث خطأ أثناء تحميل تفاصيل المستخدم: ' + error.message);
     res.redirect('/admin/users');
   }
 });
@@ -289,6 +338,100 @@ router.get('/manager/users', isAuthenticated, isManager, async (req, res) => {
     console.error(error);
     req.flash('error_msg', 'حدث خطأ أثناء تحميل قائمة المستخدمين');
     res.redirect('/admin/manager/dashboard');
+  }
+});
+
+// Export users to Excel route
+router.get('/users/export', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    console.log('--- بدء تصدير المستخدمين ---');
+    console.log('req.user:', req.user);
+    console.log('req.session:', req.session);
+    if (!req.user || !req.user._id) {
+      console.log('المعرف غير صالح أو المستخدم غير موجود في الجلسة');
+      return res.status(401).json({ error: 'المعرف غير صالح أو المستخدم غير موجود في الجلسة' });
+    }
+    console.log('بدء عملية تصدير المستخدمين...');
+    
+    // جلب جميع المستخدمين
+    console.log('جاري جلب المستخدمين من قاعدة البيانات...');
+    const users = await User.find().select('-password -resetPasswordToken -resetPasswordExpires -verificationToken').lean();
+    
+    console.log(`تم العثور على ${users.length} مستخدم للتصدير`);
+    
+    if (!users || users.length === 0) {
+      console.log('لم يتم العثور على مستخدمين للتصدير');
+      return res.status(404).json({ error: 'لا يوجد مستخدمين للتصدير' });
+    }
+
+    // تحضير البيانات للتصدير
+    const excelData = users.map(user => {
+      return {
+        'الاسم': user.name || '-',
+        'الاسم العربي': user.arabicName || '-',
+        'الاسم الإنجليزي': user.englishName || '-',
+        'البريد الإلكتروني': user.email || '-',
+        'البريد الإلكتروني للعمل': user.workEmail || '-',
+        'رقم الهوية': user.civilId || '-',
+        'الجنسية': user.nationality || '-',
+        'الجنس': user.gender || '-',
+        'تاريخ الميلاد': user.birthDate ? new Date(user.birthDate).toLocaleDateString('ar-EG') : '-',
+        'رقم الهاتف': user.phone || '-',
+        'العنوان': user.address || '-',
+        'التخصص': user.specialization || '-',
+        'المسمى الوظيفي': user.jobTitle || '-',
+        'رقم الموظف': user.employeeId || '-',
+        'القسم': user.department || '-',
+        'العمل الحالي': user.currentWork || '-',
+        'تاريخ التعيين': user.hiringDate ? new Date(user.hiringDate).toLocaleDateString('ar-EG') : '-',
+        'رقم التصنيف المهني': user.professionalClassificationId || '-',
+        'تاريخ انتهاء التصنيف المهني': user.professionalClassificationExpiryDate ? new Date(user.professionalClassificationExpiryDate).toLocaleDateString('ar-EG') : '-',
+        'الدور': user.role === 'admin' ? 'مدير' : user.role === 'manager' ? 'مشرف' : 'مستخدم',
+        'الحالة': user.isVerified ? 'مفعل' : 'غير مفعل',
+        'تاريخ التسجيل': new Date(user.createdAt).toLocaleDateString('ar-EG')
+      };
+    });
+
+    // إنشاء مصنف وورقة العمل
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const wscols = [
+      {wch: 20}, {wch: 20}, {wch: 20}, {wch: 25}, {wch: 25},
+      {wch: 15}, {wch: 15}, {wch: 10}, {wch: 15}, {wch: 15},
+      {wch: 30}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 20},
+      {wch: 20}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 10},
+      {wch: 10}, {wch: 15}
+    ];
+    worksheet['!cols'] = wscols;
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'المستخدمين');
+
+    // كتابة الملف كـ binary
+    const binaryExcel = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+    // تحويل binary إلى Buffer
+    function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+      return Buffer.from(buf);
+    }
+    const buffer = s2ab(binaryExcel);
+
+    // إرسال الملف باستخدام writeHead و end
+    res.writeHead(200, {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename=users.xlsx',
+      'Content-Length': buffer.length,
+      'Access-Control-Expose-Headers': 'Content-Disposition'
+    });
+    res.end(buffer);
+  } catch (error) {
+    console.error('خطأ في تصدير المستخدمين:', error);
+    console.error('تفاصيل الخطأ:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    res.status(500).json({ error: 'حدث خطأ أثناء تصدير بيانات المستخدمين' });
   }
 });
 

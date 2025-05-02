@@ -99,7 +99,7 @@
                 <div class="col-md-4">
                   <div class="mb-3">
                     <label for="birthDate" class="form-label">تاريخ الميلاد</label>
-                    <input type="date" class="form-control" id="birthDate" name="birthDate" value="<%= user.birthDate ? user.birthDate.toISOString().split('T')[0] : '' %>">
+                    <input type="date" class="form-control" id="birthDate" name="birthDate" value="<%= user.birthDate || '' %>">
                   </div>
                 </div>
               </div>
@@ -156,7 +156,7 @@
                 <div class="col-md-4">
                   <div class="mb-3">
                     <label for="hiringDate" class="form-label">تاريخ التعيين</label>
-                    <input type="date" class="form-control" id="hiringDate" name="hiringDate" value="<%= user.hiringDate ? user.hiringDate.toISOString().split('T')[0] : '' %>">
+                    <input type="date" class="form-control" id="hiringDate" name="hiringDate" value="<%= user.hiringDate || '' %>">
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -171,7 +171,7 @@
                 <div class="col-md-4">
                   <div class="mb-3">
                     <label for="professionalClassificationExpiryDate" class="form-label">تاريخ انتهاء التصنيف المهني</label>
-                    <input type="date" class="form-control" id="professionalClassificationExpiryDate" name="professionalClassificationExpiryDate" value="<%= user.professionalClassificationExpiryDate ? user.professionalClassificationExpiryDate.toISOString().split('T')[0] : '' %>">
+                    <input type="date" class="form-control" id="professionalClassificationExpiryDate" name="professionalClassificationExpiryDate" value="<%= user.professionalClassificationExpiryDate || '' %>">
                   </div>
                 </div>
                 <div class="col-md-4">
