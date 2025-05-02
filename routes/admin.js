@@ -38,7 +38,12 @@ router.get('/dashboard', isAuthenticated, isAdmin, async (req, res) => {
 router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
   try {
     console.log('جلب قائمة المستخدمين...');
-    const users = await User.find().select('-password -resetPasswordToken -resetPasswordExpires');
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
+    const users = await User.find().select('-password -resetPasswordToken -resetPasswordExpires').skip(skip).limit(limit);
+    const totalUsers = await User.countDocuments();
+    const totalPages = Math.ceil(totalUsers / limit);
     console.log(`تم العثور على ${users.length} مستخدم`);
     
     // تحويل معرفات المستخدمين إلى نصوص
@@ -49,7 +54,9 @@ router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
     
     res.render('admin/users', {
       title: 'إدارة المستخدمين',
-      users: formattedUsers
+      users: formattedUsers,
+      currentPage: page,
+      totalPages: totalPages
     });
   } catch (error) {
     console.error('خطأ في جلب المستخدمين:', error);

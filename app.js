@@ -7,6 +7,9 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const flash = require('connect-flash');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
+const helmet = require('helmet');
+const csurf = require('csurf');
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +45,25 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// إضافة رؤوس الأمان المخصصة
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self' http://localhost:3000; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com; " +
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
+    "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com data:; " +
+    "img-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com blob: http://localhost:3000; " +
+    "connect-src 'self' blob: http://localhost:3000; " +
+    "object-src 'none'; " +
+    "media-src 'self'; " +
+    "frame-src 'self'; " +
+    "worker-src 'self' blob:; " +
+    "child-src 'self' blob:;"
+  );
+  next();
+});
+
 // Set up session with MongoDB store
 app.use(session({
   secret: process.env.SESSION_SECRET || 'سر_الجلسة_الافتراضي',
@@ -67,6 +89,13 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(compression());
+app.use(express.static('public', { maxAge: '7d' }));
+
+// مسار خاص لـ favicon
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'img', 'favicon.ico'));
+});
 
 // مسار وسيط للتعامل مع طلبات الصور من المسار القديم
 app.get('/uploads/users/:userId/:filename', (req, res) => {
@@ -105,6 +134,43 @@ const filesRoutes = require('./routes/files');
 
 // تسجيل المسارات
 console.log('جاري تسجيل مسارات المصادقة...');
+const csrfProtection = csurf({
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  },
+  ignoreMethods: ['GET', 'HEAD', 'OPTIONS']
+});
+
+// ميدلوير CSRF وحقن التوكن فقط لصفحات النماذج
+app.get('/auth/login', csrfProtection, (req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+app.get('/auth/register', csrfProtection, (req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+app.get('/auth/forgot-password', csrfProtection, (req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+app.get('/auth/reset-password/:token', csrfProtection, (req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+// ميدلوير CSRF فقط لطلبات POST على /auth
+app.post('/auth/*', csrfProtection);
+
+// ميدلوير CSRF وحقن التوكن لصفحات النماذج في admin
+app.get('/admin/users/new', csrfProtection, (req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+// ميدلوير CSRF فقط لطلبات POST على /admin
+app.post('/admin/*', csrfProtection);
+
 app.use('/auth', authRoutes);
 console.log('تم تسجيل مسارات المصادقة');
 

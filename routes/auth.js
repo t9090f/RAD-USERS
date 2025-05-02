@@ -317,17 +317,17 @@ router.get('/logout', (req, res) => {
 
 // Render register page
 router.get('/register', (req, res) => {
-  res.render('auth/register', { title: 'تسجيل مستخدم جديد' });
+  res.render('auth/register', { title: 'تسجيل مستخدم جديد', csrfToken: req.csrfToken() });
 });
 
 // Render login page
 router.get('/login', (req, res) => {
-  res.render('auth/login', { title: 'تسجيل الدخول' });
+  res.render('auth/login', { title: 'تسجيل الدخول', csrfToken: req.csrfToken() });
 });
 
 // Render forgot password page
 router.get('/forgot-password', (req, res) => {
-  res.render('auth/forgot-password', { title: 'نسيت كلمة المرور' });
+  res.render('auth/forgot-password', { title: 'نسيت كلمة المرور', csrfToken: req.csrfToken() });
 });
 
 // Render reset password page
@@ -346,7 +346,8 @@ router.get('/reset-password/:token', async (req, res) => {
 
     res.render('auth/reset-password', {
       title: 'إعادة تعيين كلمة المرور',
-      token: req.params.token
+      token: req.params.token,
+      csrfToken: req.csrfToken()
     });
   } catch (error) {
     console.error(error);

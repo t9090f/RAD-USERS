@@ -186,7 +186,7 @@
         <h3 class="mb-0">تغيير كلمة المرور</h3>
       </div>
       <div class="card-body">
-        <form action="/users/change-password" method="POST">
+        <form action="/users/change-password" method="POST" id="changePasswordForm">
           <div class="mb-3">
             <label for="currentPassword" class="form-label">كلمة المرور الحالية</label>
             <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
@@ -201,8 +201,9 @@
             <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required minlength="6">
           </div>
           <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary">تغيير كلمة المرور</button>
+            <button type="submit" class="btn btn-primary" id="changePasswordBtn">تغيير كلمة المرور</button>
           </div>
+          <div class="mt-2" id="passwordChangeStatus"></div>
         </form>
       </div>
     </div>
@@ -235,9 +236,29 @@
         <hr>
         
         <h5>الملفات المحملة</h5>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <input type="text" class="form-control" id="fileSearch" placeholder="ابحث في الملفات...">
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" id="fileTypeFilter">
+              <option value="">كل الأنواع</option>
+              <option value="pdf">PDF</option>
+              <option value="doc">DOC</option>
+              <option value="docx">DOCX</option>
+              <option value="xls">XLS</option>
+              <option value="xlsx">XLSX</option>
+              <option value="jpg">JPG</option>
+              <option value="png">PNG</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100" id="downloadAllBtn">تحميل الكل</button>
+          </div>
+        </div>
         <% if (user.files && user.files.length > 0) { %>
           <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped" id="filesTable">
               <thead>
                 <tr>
                   <th>اسم الملف الأصلي</th>
@@ -265,7 +286,7 @@
                     <td>
                       <div class="btn-group" role="group">
                         <a href="/files/view/<%= file._id %>" class="btn btn-sm btn-info" target="_blank">عرض</a>
-                        <form action="/users/delete-file/<%= file._id %>" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا الملف؟');">
+                        <form action="/users/delete-file/<%= file._id %>" method="POST" class="delete-file-form">
                           <button type="submit" class="btn btn-sm btn-danger">حذف</button>
                         </form>
                       </div>
@@ -286,48 +307,247 @@
 </div>
 
 <script>
-  // إضافة مستمع حدث لعرض رسالة عند تقديم النموذج فقط
-  document.getElementById('profileForm').addEventListener('submit', function() {
-    // عرض رسالة تحميل
-    document.getElementById('submitStatus').innerHTML = '<div class="alert alert-info">جاري حفظ البيانات...</div>';
-    
-    // طباعة بيانات النموذج في وحدة التحكم للتحقق
-    console.log('إرسال بيانات الملف الشخصي:');
-    const formData = new FormData(this);
-    for (let pair of formData.entries()) {
-      console.log(pair[0] + ': ' + pair[1]);
+  // معاينة الصورة الشخصية
+  document.getElementById('profileImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB
+        alert('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
+        this.value = '';
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.createElement('img');
+        preview.src = e.target.result;
+        preview.className = 'img-fluid rounded-circle mt-2';
+        preview.style.width = '200px';
+        preview.style.height = '200px';
+        preview.style.objectFit = 'cover';
+        
+        const existingPreview = document.querySelector('.image-preview');
+        if (existingPreview) {
+          existingPreview.remove();
+        }
+        
+        const container = document.createElement('div');
+        container.className = 'image-preview text-center';
+        container.appendChild(preview);
+        document.querySelector('.col-md-4.text-center').appendChild(container);
+      };
+      reader.readAsDataURL(file);
     }
-    
-    // تعطيل زر الإرسال لمنع النقرات المتعددة
-    document.getElementById('saveProfileBtn').disabled = true;
-    
-    // السماح للنموذج بالإرسال بشكل طبيعي
-    return true;
   });
 
-  // دالة حذف الملف
-  function deleteFile(fileId) {
-    if (confirm('هل أنت متأكد من حذف هذا الملف؟')) {
-      fetch(`/files/delete/${fileId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          location.reload();
-        } else {
-          alert('حدث خطأ أثناء حذف الملف');
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('حدث خطأ أثناء حذف الملف');
-      });
+  // التحقق من صحة الحقول
+  document.getElementById('profileForm').addEventListener('submit', function(e) {
+    let isValid = true;
+    const errorMessages = [];
+
+    // التحقق من الاسم بالعربية
+    const arabicName = document.getElementById('arabicName').value.trim();
+    if (arabicName && !/^[\u0600-\u06FF\s]+$/.test(arabicName)) {
+      errorMessages.push('الاسم بالعربية يجب أن يحتوي على أحرف عربية فقط');
+      isValid = false;
+    }
+
+    // التحقق من الاسم بالإنجليزية
+    const englishName = document.getElementById('englishName').value.trim();
+    if (englishName && !/^[a-zA-Z\s]+$/.test(englishName)) {
+      errorMessages.push('الاسم بالإنجليزية يجب أن يحتوي على أحرف إنجليزية فقط');
+      isValid = false;
+    }
+
+    // التحقق من رقم السجل المدني
+    const civilId = document.getElementById('civilId').value.trim();
+    if (civilId && !/^\d{12}$/.test(civilId)) {
+      errorMessages.push('رقم السجل المدني يجب أن يكون 12 رقماً');
+      isValid = false;
+    }
+
+    // التحقق من رقم الهاتف
+    const phone = document.getElementById('phone').value.trim();
+    if (phone && !/^\+?\d{8,15}$/.test(phone)) {
+      errorMessages.push('رقم الهاتف غير صالح');
+      isValid = false;
+    }
+
+    // التحقق من البريد الإلكتروني للعمل
+    const workEmail = document.getElementById('workEmail').value.trim();
+    if (workEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(workEmail)) {
+      errorMessages.push('البريد الإلكتروني للعمل غير صالح');
+      isValid = false;
+    }
+
+    if (!isValid) {
+      e.preventDefault();
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'alert alert-danger mt-3';
+      errorDiv.innerHTML = errorMessages.join('<br>');
+      
+      const existingError = document.querySelector('.alert-danger');
+      if (existingError) {
+        existingError.remove();
+      }
+      
+      document.getElementById('submitStatus').appendChild(errorDiv);
+      return false;
+    }
+
+    // عرض رسالة تحميل
+    document.getElementById('submitStatus').innerHTML = '<div class="alert alert-info">جاري حفظ البيانات...</div>';
+    document.getElementById('saveProfileBtn').disabled = true;
+  });
+
+  // تأكيد حذف الملف بطريقة آمنة
+  document.querySelectorAll('.delete-file-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      if (!confirm('هل أنت متأكد من حذف هذا الملف؟')) {
+        e.preventDefault();
+      }
+    });
+  });
+
+  // البحث والتصفية في جدول الملفات
+  const fileSearch = document.getElementById('fileSearch');
+  const fileTypeFilter = document.getElementById('fileTypeFilter');
+  const filesTable = document.getElementById('filesTable');
+  const tableRows = filesTable.getElementsByTagName('tr');
+
+  function filterFiles() {
+    const searchText = fileSearch.value.toLowerCase();
+    const fileType = fileTypeFilter.value.toLowerCase();
+    
+    for (let i = 1; i < tableRows.length; i++) {
+      const row = tableRows[i];
+      const fileName = row.cells[0].textContent.toLowerCase();
+      const fileTypeCell = row.cells[2].textContent.toLowerCase();
+      
+      const matchesSearch = fileName.includes(searchText);
+      const matchesType = !fileType || fileTypeCell.includes(fileType);
+      
+      row.style.display = matchesSearch && matchesType ? '' : 'none';
     }
   }
+
+  fileSearch.addEventListener('input', filterFiles);
+  fileTypeFilter.addEventListener('change', filterFiles);
+
+  // تحميل جميع الملفات
+  document.getElementById('downloadAllBtn').addEventListener('click', function() {
+    const visibleFiles = Array.from(tableRows)
+      .slice(1)
+      .filter(row => row.style.display !== 'none')
+      .map(row => row.cells[0].textContent);
+    
+    if (visibleFiles.length === 0) {
+      alert('لا توجد ملفات للتحميل');
+      return;
+    }
+    
+    // إرسال طلب تحميل جميع الملفات
+    fetch('/users/download-all-files', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ files: visibleFiles })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ملفاتي.zip';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('حدث خطأ أثناء تحميل الملفات');
+    });
+  });
+
+  // التحقق من تطابق كلمتي المرور
+  document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (newPassword !== confirmPassword) {
+      e.preventDefault();
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'alert alert-danger mt-3';
+      errorDiv.textContent = 'كلمتا المرور غير متطابقتين';
+      
+      const existingError = document.querySelector('#passwordChangeStatus .alert-danger');
+      if (existingError) {
+        existingError.remove();
+      }
+      
+      document.getElementById('passwordChangeStatus').appendChild(errorDiv);
+      return false;
+    }
+    
+    // تعطيل الزر أثناء الإرسال
+    document.getElementById('changePasswordBtn').disabled = true;
+    
+    // عرض رسالة التحميل
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'alert alert-info mt-3';
+    loadingDiv.textContent = 'جاري تغيير كلمة المرور...';
+    document.getElementById('passwordChangeStatus').appendChild(loadingDiv);
+  });
+
+  // التحقق من قوة كلمة المرور
+  document.getElementById('newPassword').addEventListener('input', function() {
+    const password = this.value;
+    const strengthDiv = document.createElement('div');
+    strengthDiv.className = 'password-strength mt-1';
+    
+    let strength = 0;
+    let feedback = '';
+    
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    switch(strength) {
+      case 0:
+      case 1:
+        feedback = 'ضعيفة جداً';
+        strengthDiv.className += ' text-danger';
+        break;
+      case 2:
+        feedback = 'ضعيفة';
+        strengthDiv.className += ' text-danger';
+        break;
+      case 3:
+        feedback = 'متوسطة';
+        strengthDiv.className += ' text-warning';
+        break;
+      case 4:
+        feedback = 'قوية';
+        strengthDiv.className += ' text-success';
+        break;
+      case 5:
+        feedback = 'قوية جداً';
+        strengthDiv.className += ' text-success';
+        break;
+    }
+    
+    const existingStrength = document.querySelector('.password-strength');
+    if (existingStrength) {
+      existingStrength.remove();
+    }
+    
+    strengthDiv.textContent = `قوة كلمة المرور: ${feedback}`;
+    this.parentNode.appendChild(strengthDiv);
+  });
 </script>
 
 <%- include('../partials/footer') %>
