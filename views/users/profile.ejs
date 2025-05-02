@@ -229,7 +229,7 @@
             <div class="form-text">إذا تركت هذا الحقل فارغاً، سيتم استخدام الاسم الأصلي للملف</div>
           </div>
           <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary">تحميل الملف</button>
+            <!-- تم حذف زر تحميل الكل نهائياً -->
           </div>
         </form>
         
@@ -251,9 +251,6 @@
               <option value="jpg">JPG</option>
               <option value="png">PNG</option>
             </select>
-          </div>
-          <div class="col-md-3">
-            <button class="btn btn-primary w-100" id="downloadAllBtn">تحميل الكل</button>
           </div>
         </div>
         <% if (user.files && user.files.length > 0) { %>
@@ -433,43 +430,6 @@
 
   fileSearch.addEventListener('input', filterFiles);
   fileTypeFilter.addEventListener('change', filterFiles);
-
-  // تحميل جميع الملفات
-  document.getElementById('downloadAllBtn').addEventListener('click', function() {
-    const visibleFiles = Array.from(tableRows)
-      .slice(1)
-      .filter(row => row.style.display !== 'none')
-      .map(row => row.cells[0].textContent);
-    
-    if (visibleFiles.length === 0) {
-      alert('لا توجد ملفات للتحميل');
-      return;
-    }
-    
-    // إرسال طلب تحميل جميع الملفات
-    fetch('/users/download-all-files', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ files: visibleFiles })
-    })
-    .then(response => response.blob())
-    .then(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'ملفاتي.zip';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('حدث خطأ أثناء تحميل الملفات');
-    });
-  });
 
   // التحقق من تطابق كلمتي المرور
   document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
